@@ -5,3 +5,9 @@ node_modules/
 .deploy-state.json
 .pm2-*.cjs
 cache/
+# CloudPipe 部署時產生的檔案(裡面會有環境變數,不能進版控)
+.pm2-ecosystem.json
+.pm2-*.cjs
+.pm2-bg-ecosystem.json
+.deploy-state.json
+.pkg-hash

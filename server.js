@@ -8,6 +8,9 @@ const { createCache } = require('./src/cache')
 const { searchClipCafe } = require('./src/clipcafe')
 const { findFfmpeg, createFrameExtractor } = require('./src/ffmpeg')
 const { createThumbStore } = require('./src/thumbs')
+const { createStreamProxy } = require('./src/stream-proxy')
+const { createSubtitleStore } = require('./src/subtitles')
+const { createInternalAuth } = require('./src/internal-auth')
 
 function intFromEnv(name, fallback) {
   const raw = process.env[name]
@@ -43,10 +46,23 @@ function createThumbs() {
   })
 }
 
+const internalAuth = createInternalAuth({ key: process.env.INTERNAL_API_KEY })
+if (!internalAuth.enabled) {
+  // 正式環境沒金鑰 = 任何人都能繞過主站直接拿片源,寧可不啟動
+  if (process.env.NODE_ENV === 'production') {
+    process.stderr.write('INTERNAL_API_KEY is required in production; refusing to start\n')
+    process.exit(1)
+  }
+  process.stderr.write('INTERNAL_API_KEY not set: every caller is trusted (local development only)\n')
+}
+
 const app = createApp({
   searchUpstream: searchClipCafe,
   cache: createCache({ ttlMs: CACHE_TTL_MS }),
-  thumbs: createThumbs()
+  thumbs: createThumbs(),
+  stream: createStreamProxy({ maxConcurrent: intFromEnv('STREAM_MAX_CONCURRENT', 48) }),
+  subtitles: createSubtitleStore(),
+  internalAuth
 })
 
 const server = app.listen(PORT, () => {

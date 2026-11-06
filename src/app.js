@@ -2,6 +2,7 @@ const express = require('express')
 const path = require('node:path')
 const { normalizeSearch } = require('./normalize')
 const { createSlugRegistry, SLUG_PATTERN } = require('./slug-registry')
+const { mountMediaRoutes } = require('./media-routes')
 
 // clip.cafe's own frontend pages with size=90; its search backend rejects
 // deep pagination past ~10k documents (Elasticsearch-style window).
@@ -44,9 +45,17 @@ function upstreamErrorStatus(err) {
   return err.name === 'TimeoutError' || err.name === 'AbortError' ? 504 : 502
 }
 
-function createApp({ searchUpstream, cache, thumbs = null }) {
+function createApp({
+  searchUpstream,
+  cache,
+  thumbs = null,
+  stream = null,
+  subtitles = null,
+  internalAuth = null
+}) {
   const app = express()
   app.disable('x-powered-by')
+  if (internalAuth) app.use('/api', internalAuth.middleware)
 
   const inflight = new Map()
   const knownSlugs = createSlugRegistry()
@@ -145,6 +154,8 @@ function createApp({ searchUpstream, cache, thumbs = null }) {
       res.status(status).json({ success: false, error: 'thumbnail not available' })
     })
   })
+
+  mountMediaRoutes(app, { stream, subtitles })
 
   app.use((req, res) => {
     res.status(404).json({ success: false, error: 'not found' })
