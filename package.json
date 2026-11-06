@@ -1,0 +1,20 @@
+{
+  "name": "clipcafe-api",
+  "version": "0.1.0",
+  "description": "Thin JSON API over clip.cafe phrase search",
+  "private": true,
+  "license": "UNLICENSED",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "express": "^5.3.0"
+  }
+}
