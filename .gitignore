@@ -4,3 +4,4 @@ node_modules/
 .pkg-hash
 .deploy-state.json
 .pm2-*.cjs
+cache/
