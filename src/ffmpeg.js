@@ -55,7 +55,7 @@ function inputArgs(input) {
     : ['-protocol_whitelist', 'file']
 }
 
-function frameArgs({ input, outputPath, seekSeconds, width }) {
+function frameArgs({ input, outputPath, seekSeconds, filter }) {
   return [
     '-hide_banner',
     '-loglevel', 'error',
@@ -64,7 +64,7 @@ function frameArgs({ input, outputPath, seekSeconds, width }) {
     '-ss', String(seekSeconds),
     '-i', input.location,
     '-frames:v', '1',
-    '-vf', `scale=${width}:-2`,
+    '-vf', filter,
     '-q:v', '5',
     '-f', 'image2',
     '-y',
@@ -148,10 +148,12 @@ function createFrameExtractor({
   spawnImpl = spawn,
   downloadImpl = downloadToFile,
   timeoutMs = 20_000,
-  width = 480
+  width = 480,
+  // 預設等比例縮到指定寬度;分享圖這種要固定尺寸的可以自己給濾鏡
+  filter = `scale=${width}:-2`
 }) {
   function attempt(input, seekSeconds, outputPath) {
-    const args = frameArgs({ input, outputPath, seekSeconds, width })
+    const args = frameArgs({ input, outputPath, seekSeconds, filter })
     return runOnce({ ffmpegPath, spawnImpl, timeoutMs, args, outputPath })
   }
 

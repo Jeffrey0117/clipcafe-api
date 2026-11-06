@@ -46,6 +46,24 @@ function createThumbs() {
   })
 }
 
+// 分享預覽用的大圖(1200x630,社群網站要的比例):取同一支片的首幀,放大裁切
+const SHARE_IMAGE_FILTER = 'scale=1200:630:force_original_aspect_ratio=increase,crop=1200:630'
+
+function createShareImages() {
+  const ffmpegPath = findFfmpeg()
+  if (!ffmpegPath) return null
+  return createThumbStore({
+    cacheDir: process.env.SHARE_IMAGE_CACHE_DIR || path.join(__dirname, 'cache', 'og'),
+    extract: createFrameExtractor({
+      ffmpegPath,
+      filter: SHARE_IMAGE_FILTER,
+      timeoutMs: intFromEnv('THUMB_TIMEOUT_MS', 20000)
+    }),
+    maxConcurrent: 2,
+    maxFiles: intFromEnv('SHARE_IMAGE_MAX_FILES', 5000)
+  })
+}
+
 const internalAuth = createInternalAuth({ key: process.env.INTERNAL_API_KEY })
 if (!internalAuth.enabled) {
   // 正式環境沒金鑰 = 任何人都能繞過主站直接拿片源,寧可不啟動
@@ -60,6 +78,7 @@ const app = createApp({
   searchUpstream: searchClipCafe,
   cache: createCache({ ttlMs: CACHE_TTL_MS }),
   thumbs: createThumbs(),
+  shareImages: createShareImages(),
   stream: createStreamProxy({ maxConcurrent: intFromEnv('STREAM_MAX_CONCURRENT', 48) }),
   subtitles: createSubtitleStore(),
   internalAuth

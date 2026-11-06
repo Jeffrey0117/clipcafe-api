@@ -49,6 +49,7 @@ function createApp({
   searchUpstream,
   cache,
   thumbs = null,
+  shareImages = null,
   stream = null,
   subtitles = null,
   internalAuth = null
@@ -115,7 +116,9 @@ function createApp({
   })
 
   // 影片首幀縮圖。只替搜尋結果出現過的 slug 抽圖;已經抽好的照送。
-  app.get('/api/thumb/:slug', async (req, res) => {
+  // 同一段邏輯給兩種圖用:卡片封面(thumbs)和分享預覽的大圖(shareImages)。
+  const imageRoute = (store) => async (req, res) => {
+    const thumbs = store
     const { slug } = req.params
     if (!SLUG_PATTERN.test(slug)) {
       return res.status(400).json({ success: false, error: 'invalid slug' })
@@ -153,7 +156,10 @@ function createApp({
       res.set('Cache-Control', 'no-store')
       res.status(status).json({ success: false, error: 'thumbnail not available' })
     })
-  })
+  }
+
+  app.get('/api/thumb/:slug', imageRoute(thumbs))
+  app.get('/api/og/:slug', imageRoute(shareImages))
 
   mountMediaRoutes(app, { stream, subtitles })
 
